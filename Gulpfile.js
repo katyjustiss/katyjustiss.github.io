@@ -1,0 +1,131 @@
+var gulp = require('gulp');
+var browserSync = require('browser-sync').create();
+var deploy      = require('gulp-gh-pages');
+var $ = require('gulp-load-plugins')({
+      pattern: ['gulp-*', 'del', 'main-bower-files']
+    });
+
+///////////BABEL//////////////////
+gulp.task('js:dev', function () {
+  return gulp
+    .src(['src/**/*.js', 'src/*.js', 'src/**/**/*.js'])
+    .pipe($.sourcemaps.init())
+    .pipe($.babel())
+    .pipe($.sourcemaps.write('.'))
+    .pipe(gulp.dest('public'));
+});
+
+// gulp.task('js:prod', function () {
+//   return gulp
+//     .src(['src/**/*.js', 'src/*.js', 'src/**/**/*.js'])
+//     .pipe($.sourcemaps.init())
+//     .pipe($.babel())
+//     .pipe($.uglify())
+//     .pipe($.sourcemaps.write('.'))
+//     .pipe(gulp.dest('public'))
+// });
+
+//////////////BOWER///////////////
+gulp.task('bower', function () {
+  return gulp
+    .src($.mainBowerFiles('**/*.js'))
+    .pipe($.concat('build.js'))
+    .pipe(gulp.dest('public/lib'))
+  return gulp
+    .src($.mainBowerFiles('**/*.css'))
+    .pipe($.concat('build.css'))
+    .pipe(gulp.dest('public/lib'))
+});
+
+// gulp.task('bower:css', function () {
+//   return gulp
+//     .src($.mainBowerFiles('**/*.css'))
+//     .pipe($.concat('build.css'))
+//     .pipe(gulp.dest('public/lib'))
+// });
+
+/////////////CLEAN//////////////////
+gulp.task('clean', function () {
+   $.del('./public')
+});
+
+///////////////COPY////////////////// trying to copy CNAME. May need to add up top
+// gulp.task('copy', function () {
+//   gulp.src(['/src/CNAME'])
+//   .pipe(gulp.dest('public'))
+// });
+
+gulp.task('copy', function () {
+  gulp
+    .src(['src/**/*.html', 'src/*.html'])
+    .pipe(gulp.dest('public'))
+    .pipe(browserSync.stream())
+  gulp
+    .src('src/images/**')
+    .pipe(gulp.dest('public/images'))
+    .pipe(browserSync.stream())
+  gulp
+    .src('src/CNAME')
+    .pipe(gulp.dest('public'));
+});
+
+/////////////DEPLOY/////////////////
+gulp.task('deploy', function () {
+  return gulp
+    .src("public/**/**")
+    .pipe(deploy())
+});
+
+///////////////SASS///////////////////
+gulp.task('sass:dev', function () {
+  return gulp
+    .src('src/**/main.scss')
+    .pipe($.sourcemaps.init())
+    .pipe($.sass().on('error', $.sass.logError))
+    .pipe($.sourcemaps.write())
+    .pipe($.autoprefixer('last 2 version'))
+    .pipe(gulp.dest('public'))
+    .pipe(browserSync.stream())
+});
+
+// gulp.task('sass:prod', function () {
+//   return gulp
+//     .src('src/**/main.scss')
+//     .pipe($.sass({
+//         outputStyle: 'compressed'
+//       })
+//       .on('error', $.sass.logError)
+//     )
+//     .pipe($.autoprefixer('last 2 version'))
+//     .pipe(gulp.dest('public'))
+// });
+
+///////////////UGLIFY OR COMPRESS////////////////
+// gulp.task('compress', function() { //not working.
+//   return gulp.src('public/lib/*.js')
+//     .pipe($.uglify())
+//     .pipe(gulp.dest('public/lib'));
+// });
+
+gulp.task('build', ['copy', 'sass:dev', 'js:dev', 'bower'])
+
+gulp.task('build:prod', ['copy', 'sass:prod', 'js:prod', 'bower'])
+//may need a compress or uglify
+
+gulp.task('browser-sync', function() {
+    browserSync.init({
+      server: {
+          baseDir: "public"
+      }
+    });
+});
+
+//SERVER AND WATCH
+gulp.task('serve', ['build'], function () {
+  gulp.start('browser-sync');
+  gulp.watch(['src/*.html', 'src/**/*.html', 'src/**/**/*.html'], ['copy']).on('change', browserSync.reload)
+  gulp.watch(['src/**/*.scss', 'src/**/**/*.scss'], ['sass:dev']).on('change', browserSync.reload)
+  gulp.watch(['src/**/*.js', 'src/**/**/*.js'], ['js:dev']).on('change', browserSync.reload)
+});
+
+gulp.task('default', ['clean'], function() {});

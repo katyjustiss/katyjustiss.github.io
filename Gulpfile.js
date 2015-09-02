@@ -57,10 +57,6 @@ gulp.task('clean', function () {
 
 gulp.task('copy', function () {
   gulp
-    .src(['src/**/*.html', 'src/*.html'])
-    .pipe(gulp.dest('public'))
-    .pipe(browserSync.stream())
-  gulp
     .src('src/images/**')
     .pipe(gulp.dest('public/images'))
     .pipe(browserSync.stream())
@@ -115,7 +111,7 @@ gulp.task('build:prod', ['copy', 'sass:prod', 'js:prod', 'bower'])
 gulp.task('browser-sync', function() {
     browserSync.init({
       server: {
-          baseDir: "public"
+          baseDir: "./"
       }
     });
 });
@@ -123,7 +119,7 @@ gulp.task('browser-sync', function() {
 //SERVER AND WATCH
 gulp.task('serve', ['build'], function () {
   gulp.start('browser-sync');
-  gulp.watch(['src/*.html', 'src/**/*.html', 'src/**/**/*.html'], ['copy']).on('change', browserSync.reload)
+  gulp.watch(['/html', './*.html']).on('change', browserSync.reload)
   gulp.watch(['src/**/*.scss', 'src/**/**/*.scss'], ['sass:dev']).on('change', browserSync.reload)
   gulp.watch(['src/**/*.js', 'src/**/**/*.js'], ['js:dev']).on('change', browserSync.reload)
 });
